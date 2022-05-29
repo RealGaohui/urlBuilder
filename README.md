@@ -1,5 +1,9 @@
 # urlBuilder
 
+```
+go get github.com/RealGaohui/urlBuilder
+```
+
 
 ```
 package main
