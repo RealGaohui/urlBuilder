@@ -6,10 +6,10 @@ import (
 )
 
 var (
-	charSet = "&#+=/? "
-	defaultChar = "koko"
-	url      string
-	defaultURL  = "your base or parameters invalid"
+	charSet        = "&#+=/? "
+	defaultChar    = "koko"
+	url            string
+	defaultURL     = "your base or parameters invalid"
 	defaultBuilder = Builder{url: &defaultURL}
 )
 
@@ -31,7 +31,7 @@ type builder interface {
 
 func URLBuilder() *Builder {
 	return &Builder{
-		url: &url,
+		url:  &url,
 		args: []*string{},
 		char: registry(),
 	}
@@ -40,25 +40,6 @@ func URLBuilder() *Builder {
 func (b *Builder) SetBase(base string) *Builder {
 	b.args = append(b.args, &base)
 	if b.valid(base) {
-		return &Builder{
-			url: func() *string {
-				tmp := make([]string, 5)
-				for _, val := range b.args{
-					tmp = append(tmp, *val)
-				}
-				url = strings.Join(tmp, "")
-				return &url
-			}(),
-			args: b.args,
-			char: b.char,
-		}
-	}else {
-		return &defaultBuilder
-	}
-}
-
-func (b *Builder) SetPath(path string) *Builder {
-	b.args = append(b.args, &path)
 		return &Builder{
 			url: func() *string {
 				tmp := make([]string, 5)
@@ -71,24 +52,43 @@ func (b *Builder) SetPath(path string) *Builder {
 			args: b.args,
 			char: b.char,
 		}
+	} else {
+		return &defaultBuilder
+	}
 }
 
-func (b *Builder)SetParameter(args ...string) *Builder{
+func (b *Builder) SetPath(path string) *Builder {
+	b.args = append(b.args, &path)
+	return &Builder{
+		url: func() *string {
+			tmp := make([]string, 5)
+			for _, val := range b.args {
+				tmp = append(tmp, *val)
+			}
+			url = strings.Join(tmp, "")
+			return &url
+		}(),
+		args: b.args,
+		char: b.char,
+	}
+}
+
+func (b *Builder) SetParameter(args ...string) *Builder {
 	format := args[:]
 	b.generateParameter(format)
 	var builder strings.Builder
-	if len(args)%2 != 0{
+	if len(args)%2 != 0 {
 		return &defaultBuilder
 	}
 	tmp := []string{}
-	for i:=0; i<len(format); i++{
+	for i := 0; i < len(format); i++ {
 		if i%2 == 0 {
 			arg := format[i] + "=" + format[i+1]
 			tmp = append(tmp, arg)
 		}
 	}
 	param := strings.Join(tmp, "&")
-	if strings.Contains(*b.url, "?"){
+	if strings.Contains(*b.url, "?") {
 		return &Builder{
 			url: func() *string {
 				builder.WriteString(*b.url)
@@ -98,7 +98,7 @@ func (b *Builder)SetParameter(args ...string) *Builder{
 				return &url
 			}(),
 		}
-	}else {
+	} else {
 		return &Builder{
 			url: func() *string {
 				builder.WriteString(*b.url)
@@ -112,16 +112,15 @@ func (b *Builder)SetParameter(args ...string) *Builder{
 }
 
 func (b *Builder) valid(para string) bool {
-	reg1 := regexp.MustCompile("^/[0-9a-zA-Z]+$")
-	reg2 := regexp.MustCompile("^(https|http|ftp|rtsp|mms)?://[0-9a-z.:]*$")
-	if reg1.MatchString(para) || reg2.MatchString(para) {
+	r := regexp.MustCompile("^((ht|f)tps?):\\/\\/([\\w-]+(\\.[\\w-]+)*\\/?)+(\\?([\\w\\-\\.,@?^=%&:\\/~\\+#]*)+)?$")
+	if r.MatchString(para) {
 		return true
 	} else {
 		return false
 	}
 }
 
-func (b *Builder)generateParameter(args []string) {
+func (b *Builder) generateParameter(args []string) {
 	for index, _ := range args {
 		if strings.ContainsAny(args[index], charSet) {
 			args[index] = b.replaceSpecialCharacter(args[index])
@@ -129,9 +128,9 @@ func (b *Builder)generateParameter(args []string) {
 	}
 }
 
-func (b*Builder)replaceSpecialCharacter(arg string) string {
-	for key, val := range b.char{
-		if strings.Contains(arg, key){
+func (b *Builder) replaceSpecialCharacter(arg string) string {
+	for key, val := range b.char {
+		if strings.Contains(arg, key) {
 			arg = strings.Replace(arg, key, val, -1)
 		} else {
 			arg = strings.Replace(arg, key, defaultChar, -1)
@@ -144,7 +143,7 @@ func (b *Builder) ToString() string {
 	return *b.url
 }
 
-func registry() map[string]string  {
+func registry() map[string]string {
 	char := make(map[string]string)
 	char["&"] = "%26"
 	char["+"] = "%2B"
@@ -155,4 +154,3 @@ func registry() map[string]string  {
 	char["="] = "%3D"
 	return char
 }
-
